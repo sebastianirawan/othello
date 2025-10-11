@@ -16,16 +16,19 @@ public class WhiteAgentGuiImpl extends JFrame implements WhiteAgentGui {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
         setLayout(new BorderLayout());
+        getContentPane().setBackground(Color.decode("#009067"));
         JPanel boardPanel = new JPanel(new GridLayout(8,8,2,2));
         boardPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        boardPanel.setOpaque(false); 
         for (int r=0;r<8;r++){
             for (int c=0;c<8;c++){
                 JButton b = new JButton();
                 b.setPreferredSize(new Dimension(48,48));
                 b.setName("B" + (r+1) + (c+1)); // e.g. B11
+                b.setBorder(BorderFactory.createLineBorder(Color.decode("#00774F"), 1));
                 b.setOpaque(true);
                 b.setContentAreaFilled(true);
-                b.setBackground(Color.WHITE);
+                b.setBackground(Color.decode("#009067"));
                 b.setEnabled(false);
                 final int rr = r, cc = c;
                 b.addActionListener(new ActionListener(){
@@ -45,7 +48,7 @@ public class WhiteAgentGuiImpl extends JFrame implements WhiteAgentGui {
     private void btnActionPerformed(JButton btn, int r, int c) {
         if (btn.isEnabled() && myAgent.isTurn()) {
             // send move to agent (agent will apply move and send to opponent)
-            btn.setBackground(Color.GREEN); // white agent uses GREEN
+            btn.setBackground(Color.WHITE);
             myAgent.updateBoard(btn.getName());
             deactivateAll();
             notifyUser(btn.getName() + " pressed.");
@@ -77,15 +80,15 @@ public class WhiteAgentGuiImpl extends JFrame implements WhiteAgentGui {
                 if (board[r][c] == 1) { // black -> BLUE
                     b.setOpaque(true);
                     b.setContentAreaFilled(true);
-                    b.setBackground(Color.BLUE);
+                    b.setBackground(Color.BLACK);
                     b.setEnabled(false);
                 } else if (board[r][c] == 0) { // white -> GREEN
                     b.setOpaque(true);
                     b.setContentAreaFilled(true);
-                    b.setBackground(Color.GREEN);
+                    b.setBackground(Color.WHITE);
                     b.setEnabled(false);
                 } else {
-                    b.setBackground(Color.WHITE);
+                    b.setBackground(Color.decode("#009067"));
                     b.setEnabled(false);
                 }
             }
@@ -101,12 +104,11 @@ public class WhiteAgentGuiImpl extends JFrame implements WhiteAgentGui {
                 JButton b = buttons[r][c];
                 if (tmp.board[r][c] == -1 && tmp.isValidMove(player, r, c)) {
                     b.setEnabled(true);
-                    // optional highlight as light gray
-                    b.setBackground(Color.LIGHT_GRAY);
+                    b.setBackground(Color.decode("#22AB73"));
                 } else {
                     b.setEnabled(false);
                     // if empty keep white
-                    if (tmp.board[r][c] == -1) b.setBackground(Color.WHITE);
+                    if (tmp.board[r][c] == -1) b.setBackground(Color.decode("#009067"));
                 }
             }
         }
@@ -119,7 +121,7 @@ public class WhiteAgentGuiImpl extends JFrame implements WhiteAgentGui {
                 buttons[r][c].setEnabled(false);
                 // if empty keep white
                 if (myAgent != null && myAgent.othello != null && myAgent.othello.board[r][c] == -1) {
-                    buttons[r][c].setBackground(Color.WHITE);
+                    buttons[r][c].setBackground(Color.decode("#009067"));
                 }
             }
         }

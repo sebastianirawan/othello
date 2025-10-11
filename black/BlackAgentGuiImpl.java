@@ -16,16 +16,19 @@ public class BlackAgentGuiImpl extends JFrame implements BlackAgentGui {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
         setLayout(new BorderLayout());
+        getContentPane().setBackground(Color.decode("#009067"));
         JPanel boardPanel = new JPanel(new GridLayout(8,8,2,2));
         boardPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        boardPanel.setOpaque(false); 
         for (int r=0;r<8;r++){
             for (int c=0;c<8;c++){
                 JButton b = new JButton();
                 b.setPreferredSize(new Dimension(48,48));
                 b.setName("B" + (r+1) + (c+1));
+                b.setBorder(BorderFactory.createLineBorder(Color.decode("#00774F"), 1));
                 b.setOpaque(true);
                 b.setContentAreaFilled(true);
-                b.setBackground(Color.WHITE);
+                b.setBackground(Color.decode("#009067"));
                 b.setEnabled(false);
                 final int rr = r, cc = c;
                 b.addActionListener(new ActionListener(){
@@ -44,7 +47,7 @@ public class BlackAgentGuiImpl extends JFrame implements BlackAgentGui {
 
     private void btnActionPerformed(JButton btn, int r, int c) {
         if (btn.isEnabled() && myAgent.isTurn()) {
-            btn.setBackground(Color.BLUE); // black uses BLUE in GUI
+            btn.setBackground(Color.BLACK);
             myAgent.updateBoard(btn.getName());
             deactivateAll();
             notifyUser(btn.getName() + " pressed.");
@@ -75,15 +78,15 @@ public class BlackAgentGuiImpl extends JFrame implements BlackAgentGui {
                 if (board[r][c] == 1) { // black -> BLUE
                     b.setOpaque(true);
                     b.setContentAreaFilled(true);
-                    b.setBackground(Color.BLUE);
+                    b.setBackground(Color.BLACK);
                     b.setEnabled(false);
                 } else if (board[r][c] == 0) { // white -> GREEN
                     b.setOpaque(true);
                     b.setContentAreaFilled(true);
-                    b.setBackground(Color.GREEN);
+                    b.setBackground(Color.WHITE);
                     b.setEnabled(false);
                 } else {
-                    b.setBackground(Color.WHITE);
+                    b.setBackground(Color.decode("#009067"));
                     b.setEnabled(false);
                 }
             }
@@ -98,10 +101,10 @@ public class BlackAgentGuiImpl extends JFrame implements BlackAgentGui {
                 JButton b = buttons[r][c];
                 if (tmp.board[r][c] == -1 && tmp.isValidMove(player, r, c)) {
                     b.setEnabled(true);
-                    b.setBackground(Color.LIGHT_GRAY);
+                    b.setBackground(Color.decode("#22AB73"));
                 } else {
                     b.setEnabled(false);
-                    if (tmp.board[r][c] == -1) b.setBackground(Color.WHITE);
+                    if (tmp.board[r][c] == -1) b.setBackground(Color.decode("#009067"));
                 }
             }
         }
@@ -113,7 +116,7 @@ public class BlackAgentGuiImpl extends JFrame implements BlackAgentGui {
             for (int c=0;c<8;c++){
                 buttons[r][c].setEnabled(false);
                 if (myAgent != null && myAgent.othello != null && myAgent.othello.board[r][c] == -1) {
-                    buttons[r][c].setBackground(Color.WHITE);
+                    buttons[r][c].setBackground(Color.decode("#009067"));
                 }
             }
         }
