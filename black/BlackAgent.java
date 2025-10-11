@@ -1,122 +1,129 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package othello.black;
+import othello.common.OthelloBoard;
+
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
-import java.awt.Color;
 
-public class BlackAgent extends Agent{
-    private BlackAgentGui blackGui; 
-    // -1 kosong
-    // 1 hitam
-    // 0 putih
-    public int [][] tictactoe = {
-                                {-1,-1,-1,-1,-1,-1,-1,-1},
-                                {-1,-1,-1,-1,-1,-1,-1,-1},
-                                {-1,-1,-1,-1,-1,-1,-1,-1},
-                                {-1,-1,-1, 1, 0,-1,-1,-1},
-                                {-1,-1,-1, 0, 1,-1,-1,-1},
-                                {-1,-1,-1,-1,-1,-1,-1,-1},
-                                {-1,-1,-1,-1,-1,-1,-1,-1},
-                                {-1,-1,-1,-1,-1,-1,-1,-1},
-                                }; 
-    boolean turn = false; // turn
+public class BlackAgent extends Agent {
+    private BlackAgentGui blackGui;
+    public OthelloBoard othello;
+    boolean turn = true; // black starts first
     int step = 0;
-    int row, column;
     String lastMsg = "";
 
     protected void setup() {
-        // Printout a welcome message   
-        System.out.println("Black-agent "+getAID().getName()+" is ready.");   
+        System.out.println("Black-agent "+getAID().getName()+" (BLACK) is ready.");
+        othello = new OthelloBoard();
 
-        // Show the GUI to interact with the user   
-        blackGui = new BlackAgentGuiImpl();   
+        // Show the GUI to interact with the user
+        blackGui = new BlackAgentGuiImpl();
         blackGui.setAgent(this);
-        blackGui.show();   
+        blackGui.showGUI();
+        blackGui.updateBoardVisual(othello.board);
 
-        // menunggu tawaran bermain dari tic
-        addBehaviour(new waitingBehaviour(this));
-        // bermain
+        // behaviors: invite & play
+        addBehaviour(new invitingBehaviour(this));
         addBehaviour(new playingBehaviour(this));
     }
 
-    // perilaku tac pada saat menunggu tawaran bermain dari tic
-    class waitingBehaviour extends CyclicBehaviour {
-	ACLMessage msg= receive();
-        
-        public waitingBehaviour (Agent a) {
-            super(a);
-        }
-        
+    class invitingBehaviour extends CyclicBehaviour {
+        ACLMessage msg = receive();
+        public invitingBehaviour(Agent a) { super(a); }
         public void action() {
             if (step == 0) {
+                ACLMessage m = new ACLMessage(ACLMessage.INFORM);
+                m.setContent("Let's play Othello!");
+                m.addReceiver(new AID("white", AID.ISLOCALNAME));
+                send(m);
+                block(500);
                 msg = receive();
-                if (msg != null) {
-                    lastMsg = msg.getContent();
-                    msg = new ACLMessage(ACLMessage.INFORM);
-                    // menjawab tawaran
-                    msg.setContent( "Okay!" );
-                    msg.addReceiver( new AID( "black", AID.ISLOCALNAME) );
-                    System.out.println("Black -> Black: "+ msg.getContent());
-                    send(msg); // masuk ke tahap bermain
-                    step = 1; 
+                if (msg != null && msg.getContent().contains("Okay")) {
+                    step = 1;
+                    // black starts
+                    if (othello.hasAnyValidMove(1)) {
+                        setTurn(true);
+                        blackGui.activateValidMoves(1);
+                    } else {
+                        // if black has no moves (rare), send PASS
+                        ACLMessage pm = new ACLMessage(ACLMessage.INFORM);
+                        pm.setContent("PASS");
+                        pm.addReceiver(new AID("white", AID.ISLOCALNAME));
+                        send(pm);
+                    }
                 }
             }
         }
-    }    
-    
-    // perilaku tac pada saat bermain
+    }
+
     class playingBehaviour extends CyclicBehaviour {
-	ACLMessage msg= receive();
-        
-        public playingBehaviour (Agent a) {
-            super(a);
-        }
-        
+        ACLMessage msg = receive();
+        public playingBehaviour(Agent a) { super(a); }
         public void action() {
             if (step == 1 && !isTurn()) {
                 msg = receive();
-            
-                if ((msg != null) && (!msg.getContent().equals((String) lastMsg))){
+                if (msg != null && !msg.getContent().equals(lastMsg)) {
                     lastMsg = msg.getContent();
-                    int r = Integer.parseInt(String.valueOf(msg.getContent().charAt(0)))-1;
-                    int c = Integer.parseInt(String.valueOf(msg.getContent().charAt(1)))-1;
-                    tictactoe[r][c] = 0;
-                    javax.swing.JButton btn = blackGui.getButton(r*3+c);
-                    btn.setOpaque(true);
-                    btn.setContentAreaFilled(true);
-                    btn.setBackground(Color.blue);
-                    blackGui.activateButton();
-                    setTurn(true);
+                    String content = msg.getContent();
+                    if (content.equals("PASS")) {
+                        // opponent passed -> our turn if we have moves
+                        if (othello.hasAnyValidMove(1)) {
+                            setTurn(true);
+                            blackGui.activateValidMoves(1);
+                        } else {
+                            // both cannot move -> end
+                            endGame();
+                        }
+                    } else {
+                        int r = Character.getNumericValue(content.charAt(0)) - 1;
+                        int c = Character.getNumericValue(content.charAt(1)) - 1;
+                        // apply opponent move (white=0)
+                        othello.applyMove(0, r, c);
+                        blackGui.updateBoardVisual(othello.board);
+                        if (othello.hasAnyValidMove(1)) {
+                            setTurn(true);
+                            blackGui.activateValidMoves(1);
+                        } else {
+                            // black has no moves -> send PASS back
+                            ACLMessage m = new ACLMessage(ACLMessage.INFORM);
+                            m.setContent("PASS");
+                            m.addReceiver(new AID("white", AID.ISLOCALNAME));
+                            send(m);
+                        }
+                    }
                 }
             }
-        }    
+        }
     }
-    
-    boolean isTurn(){
-        return (turn); 
-    }
-    
-    void setTurn(boolean b){
-        turn = b;
-    }
-    
-    void updateBoard(String bt){
+
+    boolean isTurn(){ return turn; }
+    void setTurn(boolean b){ turn = b; }
+
+    // called on button click in GUI
+    void updateBoard(String content) {
+        String s = content;
+        if (s.length() > 2) {
+            s = "" + s.charAt(s.length()-2) + s.charAt(s.length()-1);
+        }
+        int r = Character.getNumericValue(s.charAt(0)) - 1;
+        int c = Character.getNumericValue(s.charAt(1)) - 1;
+        // apply black (1)
+        othello.applyMove(1, r, c);
+        blackGui.updateBoardVisual(othello.board);
         setTurn(false);
-        row = Integer.parseInt(String.valueOf(bt.charAt(1)))-1;
-        column = Integer.parseInt(String.valueOf(bt.charAt(2)))-1;
-        tictactoe[row][column] = 1;
-        // kirim berita ke tic
+
         ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-	msg.setContent(""+bt.charAt(1)+bt.charAt(2));
-     	msg.addReceiver( new AID( "tic", AID.ISLOCALNAME) );
-        System.out.println("Tac -> Tic: " + msg.getContent());
-	send(msg);
+        msg.setContent("" + (r+1) + (c+1));
+        msg.addReceiver(new AID("white", AID.ISLOCALNAME));
+        send(msg);
+
+        blackGui.deactivateAll();
     }
-    
-}//end class TacAgent
+
+    void endGame(){
+        int[] cnt = othello.countPieces();
+        System.out.println("Game over. Black: " + cnt[0] + " White: " + cnt[1]);
+        blackGui.notifyUser("Game over. Black: "+cnt[0]+" White: "+cnt[1]);
+    }
+}
